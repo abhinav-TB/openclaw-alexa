@@ -1,22 +1,125 @@
 #!/bin/bash
-# AI Claw - Automated Configuration Script
+# AI Claw - Universal Automated Deployer (VPS & Local)
 
-echo "Welcome to the AI Claw Alexa Skill Configuration!"
-echo "This script will inject your private credentials into the Lambda payload."
-echo "--------------------------------------------------------"
+echo "======================================================"
+echo "    AI Claw Alexa Skill - Automated Unified Setup"
+echo "======================================================"
 
-read -p "Enter your OpenClaw Webhook Token: " TOKEN
+# 1. Ask for Telegram ID
 read -p "Enter your numeric Telegram Chat ID: " TELEGRAM
-read -p "Enter your tunneling Forwarding URL (e.g. https://abc.ngrok-free.app): " URL
+
+echo "======================================================"
+echo "Tunneling Configuration"
+echo "======================================================"
+
+URL=""
+TUNNEL_CHOICE=""
+
+if command -v tailscale &> /dev/null; then
+    echo "[Found] Tailscale is installed on this system."
+    TUNNEL_CHOICE="t"
+fi
+if command -v ngrok &> /dev/null; then
+    echo "[Found] ngrok is installed on this system."
+    if [ "$TUNNEL_CHOICE" == "t" ]; then
+        read -p "Both are installed. Use ngrok (n) or tailscale (t)? (n/t): " TUNNEL_CHOICE
+    else
+        TUNNEL_CHOICE="n"
+    fi
+fi
+
+if [ -z "$TUNNEL_CHOICE" ]; then
+    echo "❌ Neither 'ngrok' nor 'tailscale' were found in your PATH."
+    echo "Please install ngrok (https://ngrok.com/download) or tailscale before running this script."
+    exit 1
+fi
+
+if [ "$TUNNEL_CHOICE" == "t" ]; then
+    echo "Starting Tailscale Funnel in the background on port 18789..."
+    tailscale funnel 18789 &
+    sleep 2
+    echo "✅ Tailscale Funnel is running!"
+    read -p "Enter your Tailscale Funnel URL (e.g. https://machine.tailnet.ts.net): " URL
+else
+    echo "Starting ngrok tunnel in the background on port 18789..."
+    # Kill existing ngrok if running to avoid port conflicts
+    pkill ngrok 2>/dev/null
+    nohup ngrok http 18789 > /dev/null 2>&1 &
+    
+    echo "Waiting for ngrok to secure a public URL..."
+    sleep 3
+    
+    # Auto-fetch ngrok URL using a tiny Python script
+    URL=$(python3 -c "
+import json, urllib.request
+try:
+    req = urllib.request.urlopen('http://127.0.0.1:4040/api/tunnels')
+    data = json.loads(req.read())
+    print(data['tunnels'][0]['public_url'])
+except Exception:
+    print('')
+")
+    
+    if [ -z "$URL" ]; then
+        echo "❌ Failed to automatically fetch ngrok URL. Are you authenticated with ngrok?"
+        read -p "Please enter your ngrok URL manually: " URL
+    else
+        echo "✅ Automatically fetched ngrok URL: $URL"
+    fi
+fi
 
 # Ensure URL has /hooks/agent correctly formatted
 if [[ $URL != *"/hooks/agent"* ]]; then
     URL="${URL%/}/hooks/agent"
 fi
 
-echo "Updating lambda/lambda_function.py..."
+# 2. OpenClaw Config Automation
+TOKEN=$(openssl rand -hex 24)
+OPENCLAW_CONFIG_PATH="$HOME/.openclaw/openclaw.json"
 
-# Reliable Python string replacement
+echo "======================================================"
+echo "Configuring Gateway Security"
+echo "======================================================"
+
+if [ -f "$OPENCLAW_CONFIG_PATH" ]; then
+    echo "Found openclaw.json on this machine! Automating Gateway security..."
+    # Python script to inject the hooks block
+    python3 -c "
+import json
+import sys
+
+config_path = sys.argv[1]
+token = sys.argv[2]
+
+try:
+    with open(config_path, 'r') as f:
+        data = json.load(f)
+    
+    data['hooks'] = {
+        'enabled': True,
+        'path': '/hooks',
+        'token': token,
+        'allowedAgentIds': [],
+        'defaultSessionKey': 'hook:ingress'
+    }
+    
+    with open(config_path, 'w') as f:
+        json.dump(data, f, indent=2)
+    print('✅ Successfully injected secure bounds into openclaw.json.')
+except Exception as e:
+    print(f'⚠️ Failed to automatically edit openclaw.json (it might be JSON5 formatted): {e}')
+    print(f'Please manually add your token to openclaw.json: {token}')
+" "$OPENCLAW_CONFIG_PATH" "$TOKEN"
+    
+    echo "⚠️ IMPORTANT: Please restart your OpenClaw service manually after this script finishes."
+else
+    echo "openclaw.json not found locally. Assuming you are deploying entirely from your laptop instead of the VPS."
+    echo "Your newly generated secure webhook token is: $TOKEN"
+    echo "⚠️ IMPORTANT: Please manually add the 'hooks' block to your VPS openclaw.json using this token!"
+fi
+
+# 3. Inject Lambda variables
+echo "Injecting configured variables into Python Lambda code..."
 python3 -c "
 import sys
 content = open('lambda/lambda_function.py').read()
@@ -26,10 +129,29 @@ content = content.replace('https://YOUR_FORWARDING_URL.ngrok-free.app/hooks/agen
 open('lambda/lambda_function.py', 'w').write(content)
 " "$TOKEN" "$TELEGRAM" "$URL"
 
-echo "--------------------------------------------------------"
-echo "Success! Your backend is fully configured!"
-echo ""
-echo "If you have the ASK CLI installed and configured with AWS, you can now instantly deploy by running:"
-echo "  $ ask deploy"
-echo ""
-echo "Otherwise, you can manually upload the 'lambda_function.py' file to the Alexa Developer Console!"
+# 4. ASK CLI Deployment
+echo "======================================================"
+echo "Preparing for Amazon Alexa Web Deployment"
+echo "======================================================"
+
+if ! command -v ask &> /dev/null; then
+    echo "❌ The Amazon 'ask-cli' is not installed."
+    echo "Please install it with: npm install -g ask-cli"
+    exit 1
+fi
+
+echo "Would you like to authenticate ASK CLI in headless mode (perfect for VPS)?"
+echo "This will give you a URL to copy/paste into your laptop browser."
+read -p "Use --no-browser authentication? (y/n): " HEADLESS
+if [ "$HEADLESS" == "y" ]; then
+    ask configure --no-browser
+else
+    ask configure
+fi
+
+echo "Deploying skill and AWS Lambda to your Amazon account..."
+ask deploy
+
+echo "======================================================"
+echo "✅ Success! AI Claw is deployed and your connection is primed!"
+echo "Your tunnel is running in the background! You can speak to Alexa right now!"
