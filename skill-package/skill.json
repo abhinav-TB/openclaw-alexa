@@ -1,0 +1,30 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "summary": "Securely control your local OpenClaw Gateway.",
+          "examplePhrases": [
+            "Alexa, ask ai claw to check my emails",
+            "Alexa, ask ai claw to summarize the news",
+            "Alexa, ask ai claw what servers are running"
+          ],
+          "name": "AI Claw",
+          "description": "An open source bridge connecting your local autonomous OpenClaw AI gateway to Alexa via secure tunneling."
+        }
+      },
+      "isAvailableWorldwide": true,
+      "testingInstructions": "Skill is open source, personal use only.",
+      "category": "UTILITIES",
+      "distributionCountries": []
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "sourceDir": "lambda"
+        }
+      }
+    },
+    "manifestVersion": "1.0"
+  }
+}
