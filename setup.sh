@@ -5,25 +5,20 @@ echo "======================================================"
 echo "    AI Claw Alexa Skill - Automated Unified Setup"
 echo "======================================================"
 
+# 1. Ask for Telegram ID & Voice Options
 echo "======================================================"
-echo "Response Delivery Configuration"
+echo "Delivery Configuration"
 echo "======================================================"
-echo "How do you want OpenClaw to asynchronously deliver its final response?"
-echo "  [t] Telegram (A text message to your phone)"
-echo "  [a] Alexa (Spoken voice on an Echo device via alexa-cli)"
-read -p "Choice (t/a): " DELIVERY_CHOICE
+echo "OpenClaw will natively deliver your background LLM responses via Telegram."
+read -p "Enter your numeric Telegram Chat ID: " TELEGRAM
 
-DELIVERY_CHANNEL=""
-DELIVERY_DEST=""
+echo ""
+echo "Optional: Do you also want OpenClaw to asynchronously speak the final response out loud via your Echo speaker? (Requires the unofficial 'alexa' CLI terminal tool installed on your VPS)."
+read -p "Enable dual voice delivery? (y/n): " VOICE_CHOICE
 
-if [ "$DELIVERY_CHOICE" == "a" ]; then
-    DELIVERY_CHANNEL="alexacli"
-    echo ""
-    echo "⚠️ NOTE: You MUST have installed 'alexa-cli' on your VPS and run 'alexacli auth'!"
-    read -p "Enter the exact name of your targeting Echo speaker (e.g. 'Living Room Echo'): " DELIVERY_DEST
-else
-    DELIVERY_CHANNEL="telegram"
-    read -p "Enter your numeric Telegram Chat ID: " DELIVERY_DEST
+VOICE_DEVICE=""
+if [ "$VOICE_CHOICE" == "y" ]; then
+    read -p "Enter the exact name of your targeting Echo speaker (e.g. 'Living Room Echo'): " VOICE_DEVICE
 fi
 echo ""
 
@@ -49,7 +44,7 @@ fi
 
 if [ -z "$TUNNEL_CHOICE" ]; then
     echo "❌ Neither 'ngrok' nor 'tailscale' were found in your PATH."
-    echo "Please install ngrok (https://ngrok.com/download) or tailscale before running this script."
+    echo "Please install ngrok or tailscale before running this script."
     exit 1
 fi
 
@@ -61,14 +56,12 @@ if [ "$TUNNEL_CHOICE" == "t" ]; then
     read -p "Enter your Tailscale Funnel URL (e.g. https://machine.tailnet.ts.net): " URL
 else
     echo "Starting ngrok tunnel in the background on port 18789..."
-    # Kill existing ngrok if running to avoid port conflicts
     pkill ngrok 2>/dev/null
     nohup ngrok http 18789 > /dev/null 2>&1 &
     
     echo "Waiting for ngrok to secure a public URL..."
     sleep 3
     
-    # Auto-fetch ngrok URL using a tiny Python script
     URL=$(python3 -c "
 import json, urllib.request
 try:
@@ -80,7 +73,7 @@ except Exception:
 ")
     
     if [ -z "$URL" ]; then
-        echo "❌ Failed to automatically fetch ngrok URL. Are you authenticated with ngrok?"
+        echo "❌ Failed to automatically fetch ngrok URL."
         read -p "Please enter your ngrok URL manually: " URL
     else
         echo "✅ Automatically fetched ngrok URL: $URL"
@@ -102,7 +95,6 @@ echo "======================================================"
 
 if [ -f "$OPENCLAW_CONFIG_PATH" ]; then
     echo "Found openclaw.json on this machine! Automating Gateway security..."
-    # Python script to inject the hooks block
     python3 -c "
 import json
 import sys
@@ -127,14 +119,11 @@ try:
     print('✅ Successfully injected secure webhooks block into openclaw.json.')
 except Exception as e:
     print(f'⚠️ Failed to automatically edit openclaw.json (it might be JSON5 formatted): {e}')
-    print(f'Please manually add your token to openclaw.json: {token}')
 " "$OPENCLAW_CONFIG_PATH" "$TOKEN"
-    
     echo "⚠️ IMPORTANT: Please restart your OpenClaw service manually after this script finishes."
 else
     echo "openclaw.json not found locally. Assuming you are deploying entirely from your laptop instead of the VPS."
     echo "Your newly generated secure webhook token is: $TOKEN"
-    echo "⚠️ IMPORTANT: Please manually add the 'hooks' block to your VPS openclaw.json using this token!"
 fi
 
 # 3. Inject Lambda variables
@@ -143,11 +132,12 @@ python3 -c "
 import sys
 content = open('lambda/lambda_function.py').read()
 content = content.replace('YOUR_NEW_PRACTICALLY_UNGUESSABLE_TOKEN', sys.argv[1])
-content = content.replace('YOUR_DELIVERY_DESTINATION_HERE', sys.argv[2])
+content = content.replace('YOUR_TELEGRAM_CHAT_ID_HERE', sys.argv[2])
 content = content.replace('https://YOUR_FORWARDING_URL.ngrok-free.app/hooks/agent', sys.argv[3])
-content = content.replace('DELIVERY_CHANNEL = \"telegram\"', f'DELIVERY_CHANNEL = \"{sys.argv[4]}\"')
+if sys.argv[4]:
+    content = content.replace('VOICE_ECHO_DEVICE = \"\"', f'VOICE_ECHO_DEVICE = \"{sys.argv[4]}\"')
 open('lambda/lambda_function.py', 'w').write(content)
-" "$TOKEN" "$DELIVERY_DEST" "$URL" "$DELIVERY_CHANNEL"
+" "$TOKEN" "$TELEGRAM" "$URL" "$VOICE_DEVICE"
 
 # 4. ASK CLI Deployment
 echo "======================================================"

@@ -2,7 +2,7 @@
 
 This repository provides an open-source, serverless Python bridge between Amazon Alexa and your local [OpenClaw](https://openclaw.ai) gateway via Amazon's free **"Alexa-Hosted Skills"**.
 
-Crucially, this integration routes your Alexa commands to OpenClaw's background Webhook API, allowing it to process complex agentic workflows asynchronously and automatically deliver the final response to your paired **Telegram** account!
+Crucially, this integration routes your Alexa commands to OpenClaw's background Webhook API, allowing it to process complex agentic workflows asynchronously and automatically deliver the final response to your paired **Telegram** account, or directly out loud via your **Alexa Echo Speaker**!
 
 ---
 
@@ -17,27 +17,8 @@ cd openclaw-alexa
 
 ---
 
-## 🚀 Path 1: The Automated Setup (Recommended)
-If you have the [Amazon ASK CLI](https://developer.amazon.com/en-US/docs/alexa/smapi/quick-start-alexa-skills-kit-command-line-interface.html) installed on your machine, you can deploy the entire solution instantly bypassing the Web Console. Our initialization script successfully handles the OpenClaw security configuration, AWS Lambda variables, and interactions model deployments entirely for you!
-
-**1. Run the Automated Setup Script:**
-Run the configuration script from your terminal:
-```bash
-./setup.sh
-# (If you get a permission error, run: chmod +x setup.sh)
-```
-This script acts as an elite super-script that completes your entire installation autonomously:
-* It will automatically detect if you have `ngrok` or `tailscale` and silently spin up a background tunnel for you.
-* It parses the inner tunnel APIs to automatically extract your Forwarding URL so you don't have to copy it.
-* It intelligently injects the secure Webhooks block into your OpenClaw JSON framework locally.
-* It sets up your entire Amazon Developer deployment natively over headless authentication.
-
-**2. You are done!** Restart your OpenClaw running service and skip to the "How to Test" section!
-
----
-
-## 🛠️ Path 2: The Manual Setup (Easiest for Beginners without Ask-CLI)
-If you do not have the ASK CLI installed, you can manually build the integration using Amazon's free graphical web interface.
+## 🛠️ Path 1: The Manual Setup (Recommended / Stable)
+You can manually build the integration using Amazon's free graphical web interface. This is the most stable method.
 
 **1. Start your local tunnel**
 On your OpenClaw machine, start your `ngrok` or `tailscale` tunnel targeting port 18789. Keep the Forwarding URL handy!
@@ -74,15 +55,31 @@ By default, the incoming webhook API in OpenClaw is disabled. You must enable it
 * Update the **Global Configuration Variables** (around line 17) inside the `lambda_function.py` editor:
    * **URL:** Your Forwarding URL (ensure you append `/hooks/agent` to the end).
    * **Token:** Your newly generated secure token.
-   * **Delivery Destination:** Your numeric Telegram Chat ID **OR** your exact Echo device name (e.g. `"Living Room Echo"`).
-   * **Delivery Channel:** Set to `"telegram"` or `"alexacli"`.
+   * **Telegram ID:** Your numeric Telegram Chat ID (`123456789`).
+   * **Voice Device:** (Optional) Enter your exact speaker name (e.g. `"Living Room Echo"`) to enable asynchronous voice playbacks.
 * Click **Deploy**.
 
 **6. Setup Voice Responses (Optional)**
-If you chose `alexacli` as your Delivery Channel in Step 5 to receive asynchronous voice playbacks instead of Telegram messages:
-* You must install the community [`alexa-cli`](https://github.com/openclaw/skills/blob/main/skills/buddyh/alexa-cli/skill.md) on your OpenClaw VPS (`npm install -g alexacli`).
+If you set a *Voice Device* in Step 5 to receive spoken voice playbacks instead of just Telegram messages:
+* You must install the community [`alexa-cli`](https://github.com/openclaw/skills/blob/main/skills/buddyh/alexa-cli) on your OpenClaw VPS (`npm install -g alexacli`).
 * Run `alexacli auth` in your VPS terminal to securely link your Amazon account.
-* Use `alexacli devices` to find your target speaker name (e.g. `"Living Room Echo"`), which must exactly match your **Delivery Destination** in the Python code!
+* Use `alexacli devices` to verify your target speaker name perfectly matches the name you put in the Python code!
+
+---
+
+## 🚀 Path 2: The Automated Setup Script (Experimental / Under Development)
+If you have the [Amazon ASK CLI](https://developer.amazon.com/en-US/docs/alexa/smapi/quick-start-alexa-skills-kit-command-line-interface.html) installed on your machine, you can run our initialization script to dynamically generate your Python code and deploy it headless.
+
+**1. Run the Automated Setup Script:**
+Run the configuration script from your terminal:
+```bash
+./setup.sh
+# (If you get a permission error, run: chmod +x setup.sh)
+```
+* It will prompt you for your Telegram ID and target Voice Echo device.
+* It will automatically detect if you have `ngrok` or `tailscale` and silently spin up a background tunnel and fetch the URL.
+* It intelligently injects the secure Webhooks block into your OpenClaw JSON framework locally.
+* It sets up your Amazon Developer deployment natively over headless authentication!
 
 ---
 
@@ -96,5 +93,5 @@ For the most reliable testing results in the Simulator, **always use full senten
   -> *Alexa Response:* "I have sent your request to AI Claw!"
 
 If your OpenClaw agent is configured correctly, your answer will be delivered asynchronously:
-* **If via Telegram:** Your Telegram app will instantly ping you with the answer!
-* **If via Alexa Voice:** Your physical Echo device will autonomously speak the answer out loud using the `alexa-cli` integration! *(Note: You must have installed the OpenClaw `alexa-cli` skill on your VPS and run `alexacli auth` for this specific path to work).*
+* **Telegram Delivery:** Your Telegram app will instantly ping you with the answer!
+* **Voice Delivery:** Your physical Echo device will autonomously speak the answer out loud using the `alexa-cli` integration!
