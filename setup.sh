@@ -5,8 +5,27 @@ echo "======================================================"
 echo "    AI Claw Alexa Skill - Automated Unified Setup"
 echo "======================================================"
 
-# 1. Ask for Telegram ID
-read -p "Enter your numeric Telegram Chat ID: " TELEGRAM
+echo "======================================================"
+echo "Response Delivery Configuration"
+echo "======================================================"
+echo "How do you want OpenClaw to asynchronously deliver its final response?"
+echo "  [t] Telegram (A text message to your phone)"
+echo "  [a] Alexa (Spoken voice on an Echo device via alexa-cli)"
+read -p "Choice (t/a): " DELIVERY_CHOICE
+
+DELIVERY_CHANNEL=""
+DELIVERY_DEST=""
+
+if [ "$DELIVERY_CHOICE" == "a" ]; then
+    DELIVERY_CHANNEL="alexacli"
+    echo ""
+    echo "⚠️ NOTE: You MUST have installed 'alexa-cli' on your VPS and run 'alexacli auth'!"
+    read -p "Enter the exact name of your targeting Echo speaker (e.g. 'Living Room Echo'): " DELIVERY_DEST
+else
+    DELIVERY_CHANNEL="telegram"
+    read -p "Enter your numeric Telegram Chat ID: " DELIVERY_DEST
+fi
+echo ""
 
 echo "======================================================"
 echo "Tunneling Configuration"
@@ -36,7 +55,7 @@ fi
 
 if [ "$TUNNEL_CHOICE" == "t" ]; then
     echo "Starting Tailscale Funnel in the background on port 18789..."
-    tailscale funnel 18789 &
+    tailscale funnel 18789 > /dev/null 2>&1 &
     sleep 2
     echo "✅ Tailscale Funnel is running!"
     read -p "Enter your Tailscale Funnel URL (e.g. https://machine.tailnet.ts.net): " URL
@@ -105,7 +124,7 @@ try:
     
     with open(config_path, 'w') as f:
         json.dump(data, f, indent=2)
-    print('✅ Successfully injected secure bounds into openclaw.json.')
+    print('✅ Successfully injected secure webhooks block into openclaw.json.')
 except Exception as e:
     print(f'⚠️ Failed to automatically edit openclaw.json (it might be JSON5 formatted): {e}')
     print(f'Please manually add your token to openclaw.json: {token}')
@@ -124,10 +143,11 @@ python3 -c "
 import sys
 content = open('lambda/lambda_function.py').read()
 content = content.replace('YOUR_NEW_PRACTICALLY_UNGUESSABLE_TOKEN', sys.argv[1])
-content = content.replace('YOUR_TELEGRAM_CHAT_ID_HERE', sys.argv[2])
+content = content.replace('YOUR_DELIVERY_DESTINATION_HERE', sys.argv[2])
 content = content.replace('https://YOUR_FORWARDING_URL.ngrok-free.app/hooks/agent', sys.argv[3])
+content = content.replace('DELIVERY_CHANNEL = \"telegram\"', f'DELIVERY_CHANNEL = \"{sys.argv[4]}\"')
 open('lambda/lambda_function.py', 'w').write(content)
-" "$TOKEN" "$TELEGRAM" "$URL"
+" "$TOKEN" "$DELIVERY_DEST" "$URL" "$DELIVERY_CHANNEL"
 
 # 4. ASK CLI Deployment
 echo "======================================================"

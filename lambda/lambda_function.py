@@ -16,7 +16,8 @@ logger.setLevel(logging.INFO)
 # Configuration: Hardcode these here since Alexa-Hosted Skills UI doesn't natively support EnvVars easily
 OPENCLAW_URL = "https://YOUR_FORWARDING_URL.ngrok-free.app/hooks/agent" # Or use Tailscale URL
 OPENCLAW_TOKEN = "YOUR_NEW_PRACTICALLY_UNGUESSABLE_TOKEN"
-TELEGRAM_CHAT_ID = "YOUR_TELEGRAM_CHAT_ID_HERE"
+DELIVERY_DESTINATION = "YOUR_DELIVERY_DESTINATION_HERE"
+DELIVERY_CHANNEL = "telegram" # Change to "alexacli" for asynchronous voice responses
 
 class LaunchRequestHandler(AbstractRequestHandler):
     """Handler for Skill Launch."""
@@ -55,8 +56,8 @@ class PassThroughIntentHandler(AbstractRequestHandler):
             payload = {
                 "message": user_query,
                 "deliver": True,
-                "channel": "telegram",
-                "to": TELEGRAM_CHAT_ID
+                "channel": DELIVERY_CHANNEL,
+                "to": DELIVERY_DESTINATION
             }
             
             logger.info(f"Sending prompt to OpenClaw Webhook: {user_query}")

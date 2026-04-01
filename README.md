@@ -74,8 +74,15 @@ By default, the incoming webhook API in OpenClaw is disabled. You must enable it
 * Update the **Global Configuration Variables** (around line 17) inside the `lambda_function.py` editor:
    * **URL:** Your Forwarding URL (ensure you append `/hooks/agent` to the end).
    * **Token:** Your newly generated secure token.
-   * **Telegram ID:** Your numeric Telegram Chat ID (`123456789`).
+   * **Delivery Destination:** Your numeric Telegram Chat ID **OR** your exact Echo device name (e.g. `"Living Room Echo"`).
+   * **Delivery Channel:** Set to `"telegram"` or `"alexacli"`.
 * Click **Deploy**.
+
+**6. Setup Voice Responses (Optional)**
+If you chose `alexacli` as your Delivery Channel in Step 5 to receive asynchronous voice playbacks instead of Telegram messages:
+* You must install the community [`alexa-cli`](https://github.com/openclaw/skills/blob/main/skills/buddyh/alexa-cli/skill.md) on your OpenClaw VPS (`npm install -g alexacli`).
+* Run `alexacli auth` in your VPS terminal to securely link your Amazon account.
+* Use `alexacli devices` to find your target speaker name (e.g. `"Living Room Echo"`), which must exactly match your **Delivery Destination** in the Python code!
 
 ---
 
@@ -88,4 +95,6 @@ For the most reliable testing results in the Simulator, **always use full senten
   `ask ai claw to check the servers`
   -> *Alexa Response:* "I have sent your request to AI Claw!"
 
-If your OpenClaw agent is configured correctly, your Telegram app will instantly ping you with the answer!
+If your OpenClaw agent is configured correctly, your answer will be delivered asynchronously:
+* **If via Telegram:** Your Telegram app will instantly ping you with the answer!
+* **If via Alexa Voice:** Your physical Echo device will autonomously speak the answer out loud using the `alexa-cli` integration! *(Note: You must have installed the OpenClaw `alexa-cli` skill on your VPS and run `alexacli auth` for this specific path to work).*
