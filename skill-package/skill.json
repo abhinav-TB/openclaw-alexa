@@ -15,14 +15,12 @@
       },
       "isAvailableWorldwide": true,
       "testingInstructions": "Skill is open source, personal use only.",
-      "category": "UTILITIES",
+      "category": "ORGANIZERS_AND_ASSISTANTS",
       "distributionCountries": []
     },
     "apis": {
       "custom": {
-        "endpoint": {
-          "sourceDir": "lambda"
-        }
+        "interfaces": []
       }
     },
     "manifestVersion": "1.0"

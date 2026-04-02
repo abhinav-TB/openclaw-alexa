@@ -152,6 +152,7 @@ fi
 
 echo "Would you like to authenticate ASK CLI in headless mode (perfect for VPS)?"
 echo "This will give you a URL to copy/paste into your laptop browser."
+echo "⚠️ NOTE: If you link your AWS account in the next step, you MUST provide keys for an IAM User with 'AWSLambda_FullAccess' and 'IAMFullAccess' policies attached!"
 read -p "Use --no-browser authentication? (y/n): " HEADLESS
 if [ "$HEADLESS" == "y" ]; then
     ask configure --no-browser

@@ -114,6 +114,12 @@ If you populated the `VOICE_ECHO_DEVICE` parameter in Step 4 to magically hear y
 ## 🚀 Path 2: The Automated Setup Script (Experimental / Under Development)
 If you are an advanced power user with the [Amazon ASK CLI](https://developer.amazon.com/en-US/docs/alexa/smapi/quick-start-alexa-skills-kit-command-line-interface.html) installed locally on your machine, you can run our initialization script to dynamically generate your Python code and cleanly deploy your skills natively!
 
+**Prerequisite: AWS IAM Credentials**
+Because this script utilizes `ask deploy` to autonomously compile an AWS Lambda function on your behalf, you *must* have a configured paid AWS Account linked to your terminal. 
+1. Log into your [AWS IAM Console](https://console.aws.amazon.com/iam/).
+2. Create an IAM User with Programmatic Access (generating an Access Key ID and Secret Key).
+3. You **must** attach the explicit `AWSLambda_FullAccess` and `IAMFullAccess` security policies to this user so the script has permission to provision the Lambda architecture!
+
 **1. Run the Automated Setup Script:**
 Run the configuration script from your terminal:
 ```bash
