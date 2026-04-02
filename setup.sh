@@ -126,8 +126,8 @@ else
     echo "Your newly generated secure webhook token is: $TOKEN"
 fi
 
-# 3. Inject Lambda variables
-echo "Injecting configured variables into Python Lambda code..."
+# 3. Inject Lambda variables into a GITIGNORED private copy (never overwrite the public template!)
+echo "Injecting configured variables into a private lambda_generated.py (gitignored)..."
 python3 -c "
 import sys
 content = open('lambda/lambda_function.py').read()
@@ -136,8 +136,9 @@ content = content.replace('YOUR_TELEGRAM_CHAT_ID_HERE', sys.argv[2])
 content = content.replace('https://YOUR_FORWARDING_URL.ngrok-free.app/hooks/agent', sys.argv[3])
 if sys.argv[4]:
     content = content.replace('VOICE_ECHO_DEVICE = \"\"', f'VOICE_ECHO_DEVICE = \"{sys.argv[4]}\"')
-open('lambda/lambda_function.py', 'w').write(content)
+open('lambda_generated.py', 'w').write(content)
 " "$TOKEN" "$TELEGRAM" "$URL" "$VOICE_DEVICE"
+echo "✅ Private lambda_generated.py created. Copy this file into the Alexa Developer Console Code tab."
 
 # 4. ASK CLI Deployment
 echo "======================================================"

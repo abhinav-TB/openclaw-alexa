@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import requests
 
 from ask_sdk_core.skill_builder import SkillBuilder
@@ -13,11 +14,16 @@ from ask_sdk_model import Response
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# Configuration: Hardcode these here since Alexa-Hosted Skills UI doesn't natively support EnvVars easily
+# ⚠️  SECURITY WARNING: Never fill in real values and commit this file to a public repository!
+# Use lambda.py (which is gitignored) for your private local configuration instead.
 OPENCLAW_URL = "https://YOUR_FORWARDING_URL.ngrok-free.app/hooks/agent" # Or use Tailscale URL
 OPENCLAW_TOKEN = "YOUR_NEW_PRACTICALLY_UNGUESSABLE_TOKEN"
 TELEGRAM_CHAT_ID = "YOUR_TELEGRAM_CHAT_ID_HERE"
-VOICE_ECHO_DEVICE = "" # Optional: Enter your specific device name (e.g. "Living Room Echo") to enable AI voice playback via the bash tool.
+VOICE_ECHO_DEVICE = "" # Optional: Enter your specific device name (e.g. "Living Room Echo") to enable AI voice playback.
+
+# Sanitize the device name to prevent prompt injection attacks
+if VOICE_ECHO_DEVICE:
+    VOICE_ECHO_DEVICE = re.sub(r"[^a-zA-Z0-9 ']", "", VOICE_ECHO_DEVICE).strip()
 
 class LaunchRequestHandler(AbstractRequestHandler):
     """Handler for Skill Launch."""
@@ -67,7 +73,8 @@ class PassThroughIntentHandler(AbstractRequestHandler):
             logger.info(f"Sending prompt to OpenClaw Webhook: {user_query}")
             
             # Alexa times out after 8 seconds, so we set a timeout of 6 seconds
-            response = requests.post(OPENCLAW_URL, json=payload, headers=headers, timeout=6.0)
+            # verify=True enforces SSL certificate validation to prevent MITM attacks
+            response = requests.post(OPENCLAW_URL, json=payload, headers=headers, timeout=6.0, verify=True)
             
             if response.status_code == 200:
                 data = response.json()
