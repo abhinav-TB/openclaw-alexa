@@ -64,6 +64,7 @@ If you set a *Voice Device* in Step 5 to receive spoken voice playbacks instead 
 * You must install the community [`alexa-cli`](https://github.com/openclaw/skills/blob/main/skills/buddyh/alexa-cli) on your OpenClaw VPS (`npm install -g alexacli`).
 * Run `alexacli auth` in your VPS terminal to securely link your Amazon account.
 * Use `alexacli devices` to verify your target speaker name perfectly matches the name you put in the Python code!
+* **CRITICAL - Prime your Agent:** Go right into your OpenClaw web interface and explicitly tell your agent to remember the tool! Send it a message like: *"Please remember that whenever a webhook request asks you to speak to an Alexa device, you must proactively load and use your `alexacli` skill to deliver it."*
 
 ---
 
