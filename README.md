@@ -8,15 +8,15 @@ Because OpenClaw executes deep, autonomous agentic workflows, it takes vastly lo
 
 ### 🗺️ Infrastructure Flow
 ```mermaid
-graph TD
-    UserVoice(("User Voice")) -->|"ask ai claw to..."| Amzn["Amazon Cloud"]
-    Amzn -->|"JSON IntentRequest"| Aws["AWS Lambda"]
-    Aws -->|"HTTPS webhook port 18789"| Tunnel{"Ngrok / Tailscale"}
-    Tunnel -->|"Internal routing"| Api["OpenClaw Local API"]
-    Api -->|"Autonomous Tasking"| Llm(("OpenClaw LLM"))
-    Llm -->|"Path 1: Default Text"| Telegram["📱 Telegram Notification"]
-    Llm -->|"Path 2: Voice Plugin"| AlexaCli["🔊 alexa-cli"]
-    AlexaCli -->|"Direct API Override"| Speaker(("Echo Speaker Device"))
+graph LR
+    Voice(("User Voice")) --> Amazon["Amazon Cloud"]
+    Amazon --> Lambda["AWS Lambda"]
+    Lambda --> Tunnel{"Secure Tunnel"}
+    Tunnel --> API["OpenClaw API"]
+    API --> LLM(("OpenClaw LLM"))
+    LLM --> Telegram["📱 Telegram"]
+    LLM --> CLI["🔊 alexa-cli"]
+    CLI --> Speaker(("Echo Device"))
 ```
 
 ---

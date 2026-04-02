@@ -1,0 +1,5 @@
+- test tailscale
+- test cli deployment 
+- understand the code
+- [x] ask cli for voice response
+- [x] Add test and security
