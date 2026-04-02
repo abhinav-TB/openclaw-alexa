@@ -6,6 +6,19 @@ Because OpenClaw executes deep, autonomous agentic workflows, it takes vastly lo
 * It pings your **Telegram** natively when finished.
 * It can dynamically command your physical **Echo device** to speak the answer aloud natively via `alexa-cli`!
 
+### 🗺️ Infrastructure Flow
+```mermaid
+graph TD
+    UserVoice(("User Voice")) -->|"ask ai claw to..."| Amzn["Amazon Cloud"]
+    Amzn -->|"JSON IntentRequest"| Aws["AWS Lambda"]
+    Aws -->|"HTTPS webhook port 18789"| Tunnel{"Ngrok / Tailscale"}
+    Tunnel -->|"Internal routing"| Api["OpenClaw Local API"]
+    Api -->|"Autonomous Tasking"| Llm(("OpenClaw LLM"))
+    Llm -->|"Path 1: Default Text"| Telegram["📱 Telegram Notification"]
+    Llm -->|"Path 2: Voice Plugin"| AlexaCli["🔊 alexa-cli"]
+    AlexaCli -->|"Direct API Override"| Speaker(("Echo Speaker Device"))
+```
+
 ---
 
 ## 📥 Getting Started
