@@ -8,15 +8,17 @@ Because OpenClaw executes deep, autonomous agentic workflows, it takes vastly lo
 
 ### 🗺️ Infrastructure Flow
 ```mermaid
-graph LR
-    Voice(("User Voice")) --> Amazon["Amazon Cloud"]
-    Amazon --> Lambda["AWS Lambda"]
-    Lambda --> Tunnel{"Secure Tunnel"}
-    Tunnel --> API["OpenClaw API"]
+flowchart LR
+    Voice(("User Voice")) --> Amazon["Amazon Cloud"] --> Lambda["AWS Lambda"] --> Tunnel{"Secure Tunnel"}
+```
+
+### 🗺️ Infrastructure Flow: Layer 2 (Local Processing)
+```mermaid
+flowchart LR
+    Tunnel{"Secure Tunnel"} -.-> API["OpenClaw API"]
     API --> LLM(("OpenClaw LLM"))
     LLM --> Telegram["📱 Telegram"]
-    LLM --> CLI["🔊 alexa-cli"]
-    CLI --> Speaker(("Echo Device"))
+    LLM --> CLI["🔊 alexa-cli"] --> Speaker(("Echo Device"))
 ```
 
 ---
